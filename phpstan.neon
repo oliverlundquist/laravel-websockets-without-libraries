@@ -1,0 +1,20 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: max
+    paths:
+        - app
+    typeAliases:
+        UUIDv4String: 'string' # 36 characters long
+        AppString: "'chat_app'|'game'"
+        UnixTimestamp: 'int'
+    ignoreErrors:
+        -
+            identifier: identical.alwaysTrue
+        -
+            identifier: greater.alwaysTrue
+        -
+            identifier: greaterOrEqual.alwaysTrue
+        -
+            identifier: while.alwaysTrue

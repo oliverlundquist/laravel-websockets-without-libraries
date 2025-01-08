@@ -1,0 +1,121 @@
+services:
+  # ############# #
+  # Load Balancer #
+  # ############# #
+  load-balancer:
+    image: oliverlundquist/load-balancer-example:${NGINX_TAG}
+    build:
+      dockerfile: docker/load-balancer/load-balancer
+      args:
+        NGINX_TAG: ${NGINX_TAG}
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/app/current
+    networks:
+      - php-app
+  # ############# #
+  # PHP Web App 1 #
+  # ############# #
+  nginx-web-app-1:
+    image: oliverlundquist/web-app-cluster-example:${NGINX_TAG}
+    environment:
+        FASTCGI_PASS_HOST: php-web-app-1
+    build:
+      dockerfile: docker/web-app-cluster/web-app-cluster
+      args:
+        NGINX_TAG: ${NGINX_TAG}
+    volumes:
+      - .:/var/app/current
+    networks:
+      - php-app
+  php-web-app-1:
+    image: oliverlundquist/php84-opcache:8.4.1
+    environment:
+      VALIDATE_TIMESTAMPS: 1
+    volumes:
+      - .:/var/app/current
+    networks:
+      - php-app
+  # ############# #
+  # PHP Web App 2 #
+  # ############# #
+  nginx-web-app-2:
+    image: oliverlundquist/web-app-cluster-example:${NGINX_TAG}
+    environment:
+        FASTCGI_PASS_HOST: php-web-app-2
+    build:
+      dockerfile: docker/web-app-cluster/web-app-cluster
+      args:
+        NGINX_TAG: ${NGINX_TAG}
+    volumes:
+      - .:/var/app/current
+    networks:
+      - php-app
+  php-web-app-2:
+    image: oliverlundquist/php84-opcache:8.4.1
+    environment:
+      VALIDATE_TIMESTAMPS: 1
+    volumes:
+      - .:/var/app/current
+    networks:
+      - php-app
+  # ############# #
+  # PHP Web App 3 #
+  # ############# #
+  nginx-web-app-3:
+    image: oliverlundquist/web-app-cluster-example:${NGINX_TAG}
+    environment:
+        FASTCGI_PASS_HOST: php-web-app-3
+    build:
+      dockerfile: docker/web-app-cluster/web-app-cluster
+      args:
+        NGINX_TAG: ${NGINX_TAG}
+    volumes:
+      - .:/var/app/current
+    networks:
+      - php-app
+  php-web-app-3:
+    image: oliverlundquist/php84-opcache:8.4.1
+    environment:
+      VALIDATE_TIMESTAMPS: 1
+    volumes:
+      - .:/var/app/current
+    networks:
+      - php-app
+  # ################# #
+  # WebSocket Servers #
+  # ################# #
+  php-websocket-server-1:
+    image: oliverlundquist/php84-queue-worker:8.4.1
+    command: ["php", "artisan", "websocket:start-server"]
+    environment:
+      PHP_INSTANCE: websocket-server-1
+      VALIDATE_TIMESTAMPS: 1
+    volumes:
+      - .:/var/app/current
+    networks:
+      - php-app
+  php-websocket-server-2:
+    image: oliverlundquist/php84-queue-worker:8.4.1
+    command: ["php", "artisan", "websocket:start-server"]
+    environment:
+      PHP_INSTANCE: websocket-server-2
+      VALIDATE_TIMESTAMPS: 1
+    volumes:
+      - .:/var/app/current
+    networks:
+      - php-app
+  php-websocket-server-3:
+    image: oliverlundquist/php84-queue-worker:8.4.1
+    command: ["php", "artisan", "websocket:start-server"]
+    environment:
+      PHP_INSTANCE: websocket-server-3
+      VALIDATE_TIMESTAMPS: 1
+    volumes:
+      - .:/var/app/current
+    networks:
+      - php-app
+networks:
+  php-app:
+    driver: bridge
