@@ -3,6 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96" />
+        <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
+        <link rel="manifest" href="/favicon/site.webmanifest" />
         <title>Chat App</title>
         <script src="/js/axios.min.js"></script>
         <script src="/js/alpine.min.js" defer></script>
@@ -40,7 +45,7 @@
                                             </p>
                                         </header>
                                         <div class="card-content" style="padding-right: 0; max-width: 1025px;">
-                                            <div class="content" style="max-height: 600px; overflow-y:scroll;">
+                                            <div class="content" id="chat-history" style="max-height: 600px; overflow-y:scroll;">
                                                 <template x-for="(chatMessage, index) in $store.chats[$store.state.current_chat]" :key="index">
                                                     <div class="mb-4" x-text="chatMessage" style="word-wrap: break-word;"></div>
                                                 </template>
@@ -77,15 +82,30 @@
             </template>
         </div>
         <script>
-            const socket    = new WebSocket('ws://0.0.0.0');
-            const users     = [];
-            const pingTimer = setInterval(async () => {
+            const socket       = new WebSocket('ws://0.0.0.0');
+            const users        = [];
+            const messageQueue = [];
+            const pingTimer    = setInterval(() => {
+                const state    = Alpine.store('state');
+                if (state.ready !== true) {
+                    return;
+                }
+                sendPing();
+            }, 5000);
+            const messageQueueTimer = setInterval(() => {
                 const state = Alpine.store('state');
                 if (state.ready !== true) {
                     return;
                 }
-                await axios.get('/ping/' + state.connection_id);
-            }, 1000);
+                if (socket.bufferedAmount > 0) {
+                    return;
+                }
+                if (messageQueue.length === 0) {
+                    return;
+                }
+                const nextMessage = messageQueue.shift();
+                socket.send(nextMessage);
+            }, 300);
 
             socket.onmessage = function(e) {
                 const payload = JSON.parse(e.data);
@@ -149,6 +169,15 @@
                 Alpine.store('state', state);
                 Alpine.store('chats', chats);
             }
+            function sendPing()
+            {
+                const payload = {
+                    event: 'ping',
+                    app_name: 'chat_app',
+                    message: 'ping!'
+                }
+                messageQueue.push(JSON.stringify(payload));
+            }
             function sendMessage(message)
             {
                 if (message === '') {
@@ -171,6 +200,9 @@
                 const formattedMessage = 'User ' + originConnectionId.slice(0, 5) + (state.connection_id === originConnectionId ? ' (You)' : '') + ': ' + message;
                 chats[chatName].push(formattedMessage);
                 Alpine.store('chats', chats);
+                Alpine.nextTick(() => {
+                    document.getElementById('chat-history').scrollTop = document.getElementById('chat-history').scrollHeight;
+                });
             }
             function sendChatMessage(message)
             {
@@ -187,7 +219,7 @@
                     origin,
                     destination
                 }
-                socket.send(JSON.stringify(payload));
+                messageQueue.push(JSON.stringify(payload));
                 addNewMessage('broadcast', payload.message, origin.connection_id);
             }
             function sendDmMessage(message)
@@ -217,7 +249,7 @@
                     origin,
                     destination
                 }
-                socket.send(JSON.stringify(payload));
+                messageQueue.push(JSON.stringify(payload));
                 addNewMessage(destinationUser.connection_id, payload.message, origin.connection_id);
             }
             document.addEventListener('alpine:init', () => {

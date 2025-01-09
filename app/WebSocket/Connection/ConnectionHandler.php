@@ -39,10 +39,10 @@ class ConnectionHandler
      */
     public function purgeInactiveConnections(): array
     {
-        $tenSecondsAgo        = intval(now()->subSeconds(10)->format('U'));
+        $twentySecondsAgo     = intval(now()->subSeconds(20)->format('U')); // 4 missed pings
         /** @var array<int, UUIDv4String> $deletedConnectionIds */
-        $deletedConnectionIds = ConnectionEloquent::where('last_activity_at', '<', $tenSecondsAgo)->pluck('connection_id')->all();
-        ConnectionEloquent::where('last_activity_at', '<', $tenSecondsAgo)->delete();
+        $deletedConnectionIds = ConnectionEloquent::where('last_activity_at', '<', $twentySecondsAgo)->pluck('connection_id')->all();
+        ConnectionEloquent::where('last_activity_at', '<', $twentySecondsAgo)->delete();
 
         return $deletedConnectionIds;
     }

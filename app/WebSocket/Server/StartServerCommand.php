@@ -81,19 +81,15 @@ class StartServerCommand extends Command
 
             // 1. accept new connections
             $this->acceptNewConnections($server);
-            usleep(300000); // 300ms
 
             // 2. filter out inactive connections
             $this->purgeInactiveConnections();
-            usleep(300000); // 300ms
 
             // 3. process queued messages
             $this->processQueuedMessages();
-            usleep(300000); // 300ms
 
             // 4. read sockets looking for new queued message
             $this->readDataFromAllConnections();
-            usleep(300000); // 300ms
         }
     }
 
@@ -112,7 +108,7 @@ class StartServerCommand extends Command
     {
         $deletedConnectionIds = $this->connectionHandler->purgeInactiveConnections();
         foreach ($deletedConnectionIds as $deletedConnectionId) {
-            unset($this->clients[$deletedConnectionId]);
+            $this->removeConnection($deletedConnectionId);
         }
     }
 
@@ -144,6 +140,7 @@ class StartServerCommand extends Command
             }
             $this->respondToControlFrames($webSocketFrame, $connectionId);
             $this->queueTextMessage($webSocketFrame, $connectionId);
+            $this->connectionHandler->pingConnectionId($connectionId);
         }
     }
 
@@ -193,6 +190,12 @@ class StartServerCommand extends Command
             $instanceName = $jsonDecodedPayload->destination->instance_name;
             $connectionId = $jsonDecodedPayload->destination->connection_id;
             $this->messageQueueHandler->queueForConnectionId($instanceName, $connectionId, $webSocketFrame->payload);
+        }
+        //
+        // Ping Event
+        //
+        if ($jsonDecodedPayload->event === 'ping') {
+            $this->transmit($connectionId, new MessageFactory()->pongMessage($connectionId));
         }
     }
 
@@ -271,7 +274,10 @@ class StartServerCommand extends Command
      */
     private function removeConnection(string $connectionId): void
     {
-        unset($this->clients[$connectionId]);
+        if (array_key_exists($connectionId, $this->clients)) {
+            @socket_close($this->clients[$connectionId]);
+            unset($this->clients[$connectionId]);
+        }
         $this->connectionHandler->delete($connectionId);
         $this->broadcastUsersList();
     }

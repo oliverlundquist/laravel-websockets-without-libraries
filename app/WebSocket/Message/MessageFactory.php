@@ -32,30 +32,15 @@ class MessageFactory
     }
 
     /**
-     * @param AppString $appName
-     */
-    public function chatMessage(string $payload, string $appName = 'chat_app'): string
-    {
-        return $this->jsonEncodeMessage([
-            'event'    => 'public_chat',
-            'app_name' => $appName,
-            'payload'  => $payload,
-        ]);
-    }
-
-    /**
      * @param UUIDv4String $connectionId
      * @param AppString $appName
      */
-    public function dmMessage(string $connectionId, string $instanceName, string $appName = 'chat_app'): string
+    public function pongMessage(string $connectionId, string $appName = 'chat_app'): string
     {
         return $this->jsonEncodeMessage([
-            'event'       => 'private_chat',
-            'app_name'    => $appName,
-            'destination' => [
-                'connection_id' => $connectionId,
-                'instance_name' => $instanceName
-            ]
+            'event'         => 'pong',
+            'connection_id' => $connectionId,
+            'app_name'      => $appName
         ]);
     }
 

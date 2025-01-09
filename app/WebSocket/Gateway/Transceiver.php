@@ -12,6 +12,7 @@ class Transceiver
         $webSocketFrame = new FrameFactory()->createDataFrame($message, $frameType);
 
         $result = @socket_write($client, $webSocketFrame->frame);
+        usleep(300000); // 300ms
 
         if ($result === false) {
             return 1;

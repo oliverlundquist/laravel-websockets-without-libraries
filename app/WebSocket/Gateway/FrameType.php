@@ -20,12 +20,12 @@ enum FrameType: int
     // 1000 0010 final, binary (0x2)
     // case BINARY = 0b10000010;
 
-	// 1000 1000 control: close (0x8)
+    // 1000 1000 control: close (0x8)
     case CONTROL_CLOSE = 0b10001000;
 
-	// 1000 1001 control: ping (0x9)
+    // 1000 1001 control: ping (0x9)
     case CONTROL_PING = 0b10001001;
 
-	// 1000 1010 control: pong (0xA)
+    // 1000 1010 control: pong (0xA)
     case CONTROL_PONG = 0b10001010;
 }
