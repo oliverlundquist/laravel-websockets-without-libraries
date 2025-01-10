@@ -130,10 +130,10 @@
                 const url = (typeof connectionId === 'string' && connectionId.length === 36)
                     ? 'ws://0.0.0.0?connectionId=' + connectionId
                     : 'ws://0.0.0.0';
-                const socket     = new WebSocket(url);
-                socket.onmessage = onMessage;
-                socket.onclose   = onClose;
-                return socket;
+                const webSocket     = new WebSocket(url);
+                webSocket.onmessage = onMessage;
+                webSocket.onclose   = onClose;
+                return webSocket;
             }
 
             // ///// //
