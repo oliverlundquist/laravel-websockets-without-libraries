@@ -7,14 +7,16 @@ use Illuminate\Support\Str;
 class ConnectionHandler
 {
     /**
+     * @param ?UUIDv4String $connectionId
      * @param AppString $app
      * @return UUIDv4String
      */
-    public function accept(string $app = 'chat_app'): string
+    public function accept(?string $connectionId = null, string $app = 'chat_app'): string
     {
         $nowTimestamp = intval(now()->format('U'));
-        $connectionId = (string) Str::uuid();
+        $connectionId = $connectionId ?? (string) Str::uuid();
 
+        ConnectionEloquent::where('connection_id', $connectionId)->delete();
         ConnectionEloquent::create([
             'instance_name'    => config('instance.name'),
             'connection_id'    => $connectionId,

@@ -82,39 +82,22 @@
             </template>
         </div>
         <script>
-            const socket       = new WebSocket('ws://0.0.0.0');
+            let socket         = openSocket(null, socketMessage, socketClose);
             const users        = [];
             const messageQueue = [];
-            const pingTimer    = setInterval(() => {
-                const state    = Alpine.store('state');
-                if (state.ready !== true) {
-                    return;
-                }
-                sendPing();
-            }, 5000);
-            const messageQueueTimer = setInterval(() => {
-                const state = Alpine.store('state');
-                if (state.ready !== true) {
-                    return;
-                }
-                if (socket.bufferedAmount > 0) {
-                    return;
-                }
-                if (messageQueue.length === 0) {
-                    return;
-                }
-                const nextMessage = messageQueue.shift();
-                socket.send(nextMessage);
-            }, 300);
 
-            socket.onmessage = function(e) {
-                const payload = JSON.parse(e.data);
+            // ////// //
+            // SOCKET //
+            // ////// //
+            function socketMessage(event) {
+                const payload = JSON.parse(event.data);
 
                 if (payload.event === 'welcome_message') {
+                    const currentChat = Alpine.store('state').current_chat;
                     Alpine.store('state', {
                         connection_id: payload.connection_id,
                         instance_name: payload.instance_name,
-                        current_chat: 'broadcast',
+                        current_chat: typeof currentChat === 'undefined' ? 'broadcast' : currentChat,
                         ready: true
                     });
                 }
@@ -140,7 +123,46 @@
                     }
                     addNewMessage(payload.origin.connection_id, payload.message, payload.origin.connection_id);
                 }
-            };
+            }
+            function socketClose(event) {
+                socket = openSocket(Alpine.store('state').connection_id, socketMessage, socketClose);
+            }
+            function openSocket(connectionId, onMessage, onClose) {
+                const url = (typeof connectionId === 'string' && connectionId.length === 36)
+                    ? 'ws://0.0.0.0?connectionId=' + connectionId
+                    : 'ws://0.0.0.0';
+                const socket     = new WebSocket(url);
+                socket.onmessage = onMessage;
+                socket.onclose   = onClose;
+                return socket;
+            }
+
+            // ///// //
+            // LOOPS //
+            // ///// //
+            const pingTimer = setInterval(() => {
+                if (Alpine.store('state').ready !== true) {
+                    return;
+                }
+                sendPing();
+            }, 5000);
+            const messageQueueTimer = setInterval(() => {
+                if (Alpine.store('state').ready !== true) {
+                    return;
+                }
+                if (socket.bufferedAmount > 0) {
+                    return;
+                }
+                if (messageQueue.length === 0) {
+                    return;
+                }
+                const nextMessage = messageQueue.shift();
+                socket.send(nextMessage);
+            }, 300);
+
+            // //////// //
+            // CHAT APP //
+            // //////// //
             function openChat(chatName)
             {
                 const state = Alpine.store('state');

@@ -97,9 +97,11 @@ class StartServerCommand extends Command
     {
         $client = $this->newClientAttemptingToConnect($server);
         if ($client instanceof Socket) {
-            $successfulHandshake = $this->webSocketServer->sendHandshakeResponse($client) === 0;
+            $handshakeResponse   = $this->webSocketServer->sendHandshakeResponse($client);
+            $successfulHandshake = $handshakeResponse[0] === 0;
+            $connectionId        = $handshakeResponse[1];
             if ($successfulHandshake === true) {
-                $this->addConnection($client);
+                $this->addConnection($client, $connectionId);
             }
         }
     }
@@ -255,11 +257,11 @@ class StartServerCommand extends Command
         $this->queueTextMessage($webSocketFrame);
     }
 
-    private function addConnection(Socket $client): void
+    private function addConnection(Socket $client, ?string $connectionId): void
     {
         /** @var string $instanceName */
         $instanceName   = config('instance.name') ?? '';
-        $connectionId   = $this->connectionHandler->accept();
+        $connectionId   = $this->connectionHandler->accept($connectionId);
         $welcomeMessage = (new MessageFactory)->welcomeMessage($connectionId, $instanceName);
         $this->transceiver->transmit($welcomeMessage, $client);
         socket_set_nonblock($client);
