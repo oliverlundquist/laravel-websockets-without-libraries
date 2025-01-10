@@ -9,7 +9,6 @@
         <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
         <link rel="manifest" href="/favicon/site.webmanifest" />
         <title>Chat App</title>
-        <script src="/js/axios.min.js"></script>
         <script src="/js/alpine.min.js" defer></script>
         <link rel="stylesheet" href="/css/bulma.css">
     </head>
