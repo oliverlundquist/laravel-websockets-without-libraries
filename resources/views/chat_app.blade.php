@@ -65,7 +65,7 @@
                                         </header>
                                         <div class="card-content">
                                             <div class="content">
-                                                <template x-for="(user, index) in $store.users" :key="index">
+                                                <template x-for="(user, index) in $store.users" :key="user.connection_id">
                                                     <div>
                                                         <button @click="openChat(user.connection_id)" class="button mb-4" :disabled="user.connection_id === $store.state.connection_id" x-text="'User ' + user.connection_id.slice(0, 5) + (user.connection_id === $store.state.connection_id ? ' (You)' : '')"></button>
                                                     </div>

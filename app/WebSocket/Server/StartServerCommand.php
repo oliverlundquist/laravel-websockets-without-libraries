@@ -108,9 +108,20 @@ class StartServerCommand extends Command
 
     private function purgeInactiveConnections(): void
     {
-        $deletedConnectionIds = $this->connectionHandler->purgeInactiveConnections();
-        foreach ($deletedConnectionIds as $deletedConnectionId) {
-            $this->removeConnection($deletedConnectionId);
+        $inactiveConnectionIds = $this->connectionHandler->getInactiveConnections();
+        if (count($inactiveConnectionIds) === 0) {
+            return;
+        }
+        $removedConnections = 0;
+        foreach ($inactiveConnectionIds as $inactiveConnectionId) {
+            if (array_key_exists($inactiveConnectionId, $this->clients)) {
+                $removedConnections = $removedConnections + 1;
+                $this->removeConnection($inactiveConnectionId, false);
+            }
+            $this->connectionHandler->delete($inactiveConnectionId);
+        }
+        if ($removedConnections > 0) {
+            $this->broadcastUsersList();
         }
     }
 
@@ -223,7 +234,7 @@ class StartServerCommand extends Command
         }
         $result = $this->transceiver->transmit($message, $this->clients[$connectionId], $frameType);
         if ($result === 1) { // broken pipe
-            $this->removeConnection($connectionId);
+            \Log::info(['failed to write to ' . $connectionId, socket_last_error(), socket_strerror(socket_last_error())]);
         }
     }
 
@@ -237,7 +248,7 @@ class StartServerCommand extends Command
         }
         $result = $this->transceiver->receive($this->clients[$connectionId]);
         if ($result === 1) { // broken pipe
-            $this->removeConnection($connectionId);
+            \Log::info(['failed to read from ' . $connectionId, socket_last_error(), socket_strerror(socket_last_error())]);
         }
         return $result instanceof WebSocketFrame ? $result : null;
     }
@@ -274,13 +285,16 @@ class StartServerCommand extends Command
     /**
      * @param UUIDv4String $connectionId
      */
-    private function removeConnection(string $connectionId): void
+    private function removeConnection(string $connectionId, bool $broadcastUsersList = true): void
     {
-        if (array_key_exists($connectionId, $this->clients)) {
-            @socket_close($this->clients[$connectionId]);
-            unset($this->clients[$connectionId]);
+        if (! array_key_exists($connectionId, $this->clients)) {
+            return;
         }
+        @socket_close($this->clients[$connectionId]);
+        unset($this->clients[$connectionId]);
         $this->connectionHandler->delete($connectionId);
-        $this->broadcastUsersList();
+        if ($broadcastUsersList) {
+            $this->broadcastUsersList();
+        }
     }
 }

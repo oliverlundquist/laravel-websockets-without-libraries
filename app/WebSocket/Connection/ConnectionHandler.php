@@ -39,14 +39,13 @@ class ConnectionHandler
     /**
      * @return array<int, UUIDv4String>
      */
-    public function purgeInactiveConnections(): array
+    public function getInactiveConnections(): array
     {
-        $fourMinutes = intval(now()->subMinutes(4)->format('U')); // 4 missed pings
-        /** @var array<int, UUIDv4String> $deletedConnectionIds */
-        $deletedConnectionIds = ConnectionEloquent::where('last_activity_at', '<', $fourMinutes)->pluck('connection_id')->all();
-        ConnectionEloquent::where('last_activity_at', '<', $fourMinutes)->delete();
+        $fourMinutes = intval(now()->subMinutes(4)->format('U')); // 4 missed pings (Chrome limits setInterval scripts to 1 execution per minute when tab is in background.)
+        /** @var array<int, UUIDv4String> $inactiveConnectionIds */
+        $inactiveConnectionIds = ConnectionEloquent::where('last_activity_at', '<', $fourMinutes)->pluck('connection_id')->all();
 
-        return $deletedConnectionIds;
+        return $inactiveConnectionIds;
     }
 
     /**
