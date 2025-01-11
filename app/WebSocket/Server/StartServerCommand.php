@@ -219,6 +219,9 @@ class StartServerCommand extends Command
         }
     }
 
+    /**
+     * @param UUIDv4String $connectionId
+     */
     private function transmitToConnection(string $connectionId, string $message): void
     {
         $this->transmit($connectionId, $message);
@@ -268,6 +271,9 @@ class StartServerCommand extends Command
         $this->queueTextMessage($webSocketFrame);
     }
 
+    /**
+     * @param ?UUIDv4String $connectionId
+     */
     private function addConnection(Socket $client, ?string $connectionId): void
     {
         /** @var string $instanceName */
