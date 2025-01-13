@@ -11,6 +11,9 @@ enum FrameType: int
     // 0000 0000 continuation (0x0)
     // case CONTINUATION = 0b00000000;
 
+    // 0000 0001 start, text (UTF-8), continuation (0x1)
+    // case CONTINUATION_START = 0b00000001;
+
     // 1000 0000 final, continuation (0x0)
     // case CONTINUATION_END = 0b10000000;
 
